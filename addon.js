@@ -1,11 +1,11 @@
 const express = require("express");
-const cors = require("cors");
 const { addonBuilder } = require("stremio-addon-sdk");
 const { searchMovies, getStreamingLink } = require("./scraper");
-
 const manifest = require("./manifest.json");
+
 const builder = new addonBuilder(manifest);
 
+// Catalog handler
 builder.defineCatalogHandler(async ({ id, extra }) => {
   const searchTerm = extra?.search;
   if (id === "ibomma-telugu" && searchTerm) {
@@ -15,6 +15,7 @@ builder.defineCatalogHandler(async ({ id, extra }) => {
   return { metas: [] };
 });
 
+// Stream handler
 builder.defineStreamHandler(async ({ id }) => {
   if (id.startsWith("ibomma:")) {
     const streams = await getStreamingLink(id);
@@ -23,25 +24,41 @@ builder.defineStreamHandler(async ({ id }) => {
   return { streams: [] };
 });
 
+// 🔥 Start Express server
 const app = express();
-const PORT = process.env.PORT || 7000;
+const port = process.env.PORT || 7000;
 
-app.use(cors());
-app.get("/manifest.json", (_, res) => {
-  res.send(builder.getInterface().manifest);
+const addonInterface = builder.getInterface();
+
+app.get("/manifest.json", (_req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(addonInterface.manifest);
 });
-app.get("/catalog/:type/:id/:extra?.json", async (req, res) => {
-  const { type, id } = req.params;
-  const extra = req.query;
-  const result = await builder.getInterface().get("catalog")({ type, id, extra });
-  res.send(result);
+
+app.get("/catalog/:type/:id/:extra?.json?", async (req, res) => {
+  try {
+    const catalog = await addonInterface.get("catalog", req.params);
+    res.setHeader("Content-Type", "application/json");
+    res.send(catalog);
+  } catch (e) {
+    res.status(500).send({ error: e.message });
+  }
 });
+
 app.get("/stream/:type/:id.json", async (req, res) => {
-  const { type, id } = req.params;
-  const result = await builder.getInterface().get("stream")({ type, id });
-  res.send(result);
+  try {
+    const stream = await addonInterface.get("stream", req.params);
+    res.setHeader("Content-Type", "application/json");
+    res.send(stream);
+  } catch (e) {
+    res.status(500).send({ error: e.message });
+  }
 });
 
-app.listen(PORT, () => {
-  console.log(`Addon running at http://localhost:${PORT}`);
+app.get("/", (_req, res) => {
+  res.send("✅ iBOMMA Telugu Addon is running. Use it via Stremio.");
+});
+
+app.listen(port, () => {
+  console.log(`✅ Addon running at http://localhost:${port}`);
 });
