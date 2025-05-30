@@ -2,11 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const { addonBuilder } = require("stremio-addon-sdk");
 const { searchMovies, getStreamingLink } = require("./scraper");
+
 const manifest = require("./manifest.json");
-
-const app = express();
-app.use(cors());
-
 const builder = new addonBuilder(manifest);
 
 builder.defineCatalogHandler(async ({ id, extra }) => {
@@ -26,8 +23,25 @@ builder.defineStreamHandler(async ({ id }) => {
   return { streams: [] };
 });
 
-const addonInterface = builder.getInterface();
-app.use("/", addonInterface.middleware());
-
+const app = express();
 const PORT = process.env.PORT || 7000;
-app.listen(PORT, () => console.log(`🚀 iBOMMA Telugu Addon running on port ${PORT}`));
+
+app.use(cors());
+app.get("/manifest.json", (_, res) => {
+  res.send(builder.getInterface().manifest);
+});
+app.get("/catalog/:type/:id/:extra?.json", async (req, res) => {
+  const { type, id } = req.params;
+  const extra = req.query;
+  const result = await builder.getInterface().get("catalog")({ type, id, extra });
+  res.send(result);
+});
+app.get("/stream/:type/:id.json", async (req, res) => {
+  const { type, id } = req.params;
+  const result = await builder.getInterface().get("stream")({ type, id });
+  res.send(result);
+});
+
+app.listen(PORT, () => {
+  console.log(`Addon running at http://localhost:${PORT}`);
+});
