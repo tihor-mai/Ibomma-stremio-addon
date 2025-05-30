@@ -1,0 +1,17 @@
+{
+  "id": "org.ibomma.telugu",
+  "version": "1.0.0",
+  "name": "iBOMMA Telugu Movies",
+  "description": "Watch Telugu movies from iBOMMA",
+  "types": ["movie"],
+  "catalogs": [
+    {
+      "type": "movie",
+      "id": "ibomma-telugu",
+      "name": "Telugu Movies",
+      "extra": [{ "name": "search" }]
+    }
+  ],
+  "resources": ["catalog", "stream"],
+  "idPrefixes": ["ibomma:"]
+}
