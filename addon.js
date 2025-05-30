@@ -5,7 +5,7 @@ const manifest = require("./manifest.json");
 
 const builder = new addonBuilder(manifest);
 
-// Catalog handler
+// Catalog Handler
 builder.defineCatalogHandler(async ({ id, extra }) => {
   const searchTerm = extra?.search;
   if (id === "ibomma-telugu" && searchTerm) {
@@ -15,7 +15,7 @@ builder.defineCatalogHandler(async ({ id, extra }) => {
   return { metas: [] };
 });
 
-// Stream handler
+// Stream Handler
 builder.defineStreamHandler(async ({ id }) => {
   if (id.startsWith("ibomma:")) {
     const streams = await getStreamingLink(id);
@@ -24,12 +24,11 @@ builder.defineStreamHandler(async ({ id }) => {
   return { streams: [] };
 });
 
-// 🔥 Start Express server
 const app = express();
 const port = process.env.PORT || 7000;
-
 const addonInterface = builder.getInterface();
 
+// Serve Stremio Resources
 app.get("/manifest.json", (_req, res) => {
   res.setHeader("Content-Type", "application/json");
   res.send(addonInterface.manifest);
@@ -37,28 +36,29 @@ app.get("/manifest.json", (_req, res) => {
 
 app.get("/catalog/:type/:id/:extra?.json?", async (req, res) => {
   try {
-    const catalog = await addonInterface.get("catalog", req.params);
+    const result = await addonInterface.get("catalog", req.params);
     res.setHeader("Content-Type", "application/json");
-    res.send(catalog);
-  } catch (e) {
-    res.status(500).send({ error: e.message });
+    res.send(result);
+  } catch (err) {
+    res.status(500).send({ error: err.message });
   }
 });
 
 app.get("/stream/:type/:id.json", async (req, res) => {
   try {
-    const stream = await addonInterface.get("stream", req.params);
+    const result = await addonInterface.get("stream", req.params);
     res.setHeader("Content-Type", "application/json");
-    res.send(stream);
-  } catch (e) {
-    res.status(500).send({ error: e.message });
+    res.send(result);
+  } catch (err) {
+    res.status(500).send({ error: err.message });
   }
 });
 
+// Root route (optional)
 app.get("/", (_req, res) => {
-  res.send("✅ iBOMMA Telugu Addon is running. Use it via Stremio.");
+  res.send("✅ iBOMMA Stremio Addon is running.");
 });
 
 app.listen(port, () => {
-  console.log(`✅ Addon running at http://localhost:${port}`);
+  console.log(`✅ Server listening on port ${port}`);
 });
